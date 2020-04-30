@@ -68,6 +68,8 @@ footer {
   display: inline-block;
   background-color: #0b0505;
   border: 1px solid #554e4c;
-  width: 100%;
-  margin: 1rem 0;
+  width: calc(100% + 2*2rem);
+  height: 80vh;
+  margin: 1rem -2rem;
+  box-sizing: border-box;
 }

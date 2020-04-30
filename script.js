@@ -1,11 +1,26 @@
 const mt = function () {
+    function checkNumber(a) {
+        if (typeof a != "number")
+            throw Error("number expected");
+        if (isNaN(a))
+            throw Error("not a number");
+    }
+
     class Vect {
         constructor(x = 0, y = 0) {
+            checkNumber(x);
+            checkNumber(y);
             this.x = x;
             this.y = y;
+            // cache
+            this._c_x = null;
+            this._c_y = null;
+            this._c_norm = null;
         }
 
         set(x = 0, y = 0) {
+            checkNumber(x);
+            checkNumber(y);
             this.x = x;
             this.y = y;
         }
@@ -15,40 +30,55 @@ const mt = function () {
         }
 
         norm() {
-            return Math.sqrt(this.x * this.x + this.y * this.y);
+            if (this._c_x != this.x || this._c_y != this.y || this._c_norm == null) {
+                this._c_norm = Math.sqrt(this.x * this.x + this.y * this.y);
+            }
+            return this._c_norm;
         }
 
         normalizeInplace() {
+            if (this.norm() == NaN || this.norm() == 0)
+                throw Error("math error");
             this.scaleInplace(1 / this.norm());
             return this;
         }
 
         setNorm(a) {
+            checkNumber(a);
+            if (a == NaN)
+                throw Error("math error");
             this.normalizeInplace().scaleInplace(a);
             return this;
         }
 
         addInplace(other) {
+            checkNumber(other.x);
+            checkNumber(other.y);
             this.x += other.x;
             this.y += other.y;
             return this;
         }
 
         minus(other) {
+            checkNumber(other.x);
+            checkNumber(other.y);
             return new Vect(this.x - other.x, this.y - other.y);
         }
 
         scaleInplace(a) {
+            checkNumber(a);
             this.x *= a;
             this.y *= a;
             return this;
         }
 
-        cap(a) {
+        capInplace(a) {
+            checkNumber(a);
             var norm = this.norm();
             if (norm > a) {
                 this.setNorm(a);
             }
+            return this;
         }
     }
 
@@ -67,6 +97,8 @@ const ph = function () {
         }
 
         applyForce(force) {
+            if (this.mass == 0)
+                throw Error("math error");
             this.acc.addInplace(force.copy().scaleInplace(1 / this.mass));
         }
 
@@ -81,28 +113,20 @@ const ph = function () {
         }
     }
 
-    class Gravity {
-        constructor(G = .005) {
-            this.G = G;
-        }
-
-        getForces(mobA, mobB) {
-            var ba = mobA.pos.minus(mobB.pos);
-            var baNorm = ba.norm();
-            if (baNorm > 0) {
-                var magn = this.G * mobA.mass * mobB.mass / (baNorm * baNorm);
-                ba.normalizeInplace().scaleInplace(magn);
-                ba.cap(5);
-                return { 'a': ba.copy().scaleInplace(-1), 'b': ba }
-            } else {
-                return { 'a': new mt.Vect(), 'b': new mt.Vect() }
-            }
+    function computeGravity(G, ba, aMass, bMass) {
+        if (ba.norm() > 0 && aMass != 0 && bMass != 0) {
+            var magn = G * aMass * bMass / (ba.norm() * ba.norm());
+            var gra = ba.copy();
+            gra.normalizeInplace().scaleInplace(magn);
+            return { 'a': gra.copy().scaleInplace(-1), 'b': gra }
+        } else {
+            return { 'a': new mt.Vect(), 'b': new mt.Vect() }
         }
     }
 
     return {
         Mobile: Mobile,
-        Gravity: Gravity
+        computeGravity: computeGravity
     }
 }();
 
@@ -118,14 +142,15 @@ const boids = function () {
     class Bird extends ph.Mobile {
         constructor() {
             super();
+            this.isHovered = false;
+            this.isAlive = true;
         }
     }
 
     class Sandbox {
         constructor(element) {
             this.canvas = element;
-            this.pixelPerUnit = 20;
-
+            this.pixelPerUnit = 25;
             this.dpr = window.devicePixelRatio || 1;
 
             var rect = this.canvas.getBoundingClientRect();
@@ -135,8 +160,8 @@ const boids = function () {
             this.ctx = this.canvas.getContext("2d");
 
             this.birds = [];
-            for (var i = -10; i < 10; i++) {
-                for (var j = -10; j < 10; j++) {
+            for (var i = -10; i <= 10; i++) {
+                for (var j = -10; j <= 10; j++) {
                     var bird = new Bird();
                     bird.pos = new mt.Vect(i, j);
                     bird.mass = 1 * Math.random() + 0.2;
@@ -144,7 +169,71 @@ const boids = function () {
                 }
             }
 
+            this.champion = null;
+            this.deadCount = 0;
+            this.initialCount = this.birds.length;
+
+            element.onclick = event => {
+                if (this.champion != null)
+                    return;
+                var rect = this.canvas.getBoundingClientRect();
+                var mouse = new mt.Vect(
+                    (event.clientX - rect.left) * this.dpr,
+                    (event.clientY - rect.top) * this.dpr);
+
+                this.withRescale(it => {
+                    var matrix = it.ctx.getTransform();
+                    var imatrix = matrix.invertSelf();
+
+                    var transformedMouse = new mt.Vect(
+                        mouse.x * imatrix.a + mouse.y * imatrix.c + imatrix.e,
+                        mouse.x * imatrix.b + mouse.y * imatrix.d + imatrix.f
+                    );
+
+                    for (var bird of it.birds) {
+                        var ba = bird.pos.minus(transformedMouse);
+                        if (ba.norm() < 2 * bird.radius()) {
+                            it.champion = bird;
+                            return;
+                        }
+                    }
+                });
+            }
+
+            element.onmousemove = event => {
+                var rect = this.canvas.getBoundingClientRect();
+                var mouse = new mt.Vect(
+                    (event.clientX - rect.left) * this.dpr,
+                    (event.clientY - rect.top) * this.dpr);
+
+                this.withRescale(it => {
+                    var matrix = it.ctx.getTransform();
+                    var imatrix = matrix.invertSelf();
+
+                    var transformedMouse = new mt.Vect(
+                        mouse.x * imatrix.a + mouse.y * imatrix.c + imatrix.e,
+                        mouse.x * imatrix.b + mouse.y * imatrix.d + imatrix.f
+                    );
+
+                    for (var bird of it.birds) {
+                        var ba = bird.pos.minus(transformedMouse);
+                        bird.isHovered = ba.norm() < 2 * bird.radius();
+                    }
+                });
+            };
         };
+
+        withRescale(lambda) {
+            this.ctx.save();
+
+            this.ctx.translate(this.canvas.width / 2, this.canvas.height / 2);
+            this.ctx.scale(this.dpr, this.dpr);
+            this.ctx.scale(this.pixelPerUnit, -1 * this.pixelPerUnit);
+
+            lambda(this);
+
+            this.ctx.restore();
+        }
 
         bounds() {
             var w = this.canvas.width / (this.pixelPerUnit * this.dpr);
@@ -156,25 +245,31 @@ const boids = function () {
 
         animate(deltaTimeInS) {
             for (var pair of pairs(this.birds)) {
-                if (pair.first.pos.minus(pair.second.pos).norm() < pair.first.radius() + pair.second.radius()) {
-                    // collapse
+                var ba = pair.first.pos.minus(pair.second.pos);
+
+                // collapse
+                if (ba.norm() < pair.first.radius() + pair.second.radius()) {
                     if (pair.first.mass >= pair.second.mass) {
                         pair.first.mass += pair.second.mass;
                         pair.second.mass = 0;
+                        pair.second.isAlive = false;
                     } else {
                         pair.second.mass += pair.first.mass;
                         pair.first.mass = 0;
+                        pair.first.isAlive = false;
                     }
+                    this.deadCount += 1;
+                }
+
+                // gravity
+                if (pair.first.mass > 0 && pair.second.mass > 0) {
+                    var grv = ph.computeGravity(0.005, ba, pair.first.mass, pair.second.mass);
+                    pair.first.applyForce(grv.a);
+                    pair.second.applyForce(grv.b);
                 }
             }
-            this.birds = this.birds.filter(bird => bird.mass > 0);
 
-            var gravity = new ph.Gravity();
-            for (var pair of pairs(this.birds)) {
-                var grv = gravity.getForces(pair.first, pair.second);
-                pair.first.applyForce(grv.a);
-                pair.second.applyForce(grv.b);
-            }
+            this.birds = this.birds.filter(bird => bird.mass > 0);
 
             for (var bird of this.birds) {
                 bird.animate(deltaTimeInS);
@@ -201,60 +296,48 @@ const boids = function () {
             }
         }
 
-        draw(avgAnimatePeriodInMs = null, avgDrawPeriodInMs = null) {
+        draw(avgDrawPeriodInMs = null, text = null) {
             this.ctx.save();
 
             // pre rescale draw
             this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
-            this.ctx.fillStyle = "#FFF5";
-            this.ctx.font = "12px Verdana";
-            if (avgAnimatePeriodInMs) {
-                this.ctx.fillText(`animate @ ${(1000 / avgAnimatePeriodInMs).toFixed(1)} Hz`, 10, 22);
+            if (text) {
+                this.ctx.font = "25px Verdana";
+                this.ctx.fillStyle = "#FFFA";
+                this.ctx.fillText(text, 10, 35);
             }
             if (avgDrawPeriodInMs) {
-                this.ctx.fillText(`draw @ ${(1000 / avgDrawPeriodInMs).toFixed(1)} Hz`, 10, 34);
+                this.ctx.fillStyle = "#FFF5";
+                this.ctx.font = "12px Verdana";
+                this.ctx.fillText(`draw @ ${(1000 / avgDrawPeriodInMs).toFixed(1)} Hz`, 10, this.canvas.height - 10);
             }
 
-            // rescale
-            this.ctx.translate(this.canvas.width / 2, this.canvas.height / 2);
-            this.ctx.scale(this.dpr, this.dpr);
-            this.ctx.scale(this.pixelPerUnit, -1 * this.pixelPerUnit);
+            this.withRescale(_ => {
+                // default style
+                this.ctx.fillStyle = "#FFF";
+                this.ctx.strokeStyle = "#DDD";
+                this.ctx.lineWidth = 1 / this.pixelPerUnit;
 
-            // default style
-            this.ctx.fillStyle = "#FFF";
-            this.ctx.strokeStyle = "#DDD";
-            this.ctx.lineWidth = 1 / this.pixelPerUnit;
-
-            // post rescale draw
-            this.ctx.save();
-            this.ctx.strokeStyle = "#F008";
-            this.ctx.beginPath();
-            this.ctx.moveTo(0, 0);
-            this.ctx.lineTo(1, 0);
-            this.ctx.stroke();
-
-            this.ctx.strokeStyle = "#0F08";
-            this.ctx.beginPath();
-            this.ctx.moveTo(0, 0);
-            this.ctx.lineTo(0, 1);
-            this.ctx.stroke();
-
-            var bounds = this.bounds();
-            this.ctx.strokeStyle = "#FFF4";
-            this.ctx.strokeRect(bounds.x, bounds.y, bounds.w, bounds.h);
-            this.ctx.restore();
-
-            for (var bird of this.birds) {
-                this.drawBird(bird);
-            }
+                for (var bird of this.birds) {
+                    this.drawBird(bird);
+                }
+            });
 
             this.ctx.restore();
         }
 
         drawBird(bird) {
             this.ctx.save();
-            this.ctx.fillStyle = "#FFF3";
-            this.ctx.strokeStyle = "#FFF";
+            if (bird.isHovered) {
+                this.ctx.fillStyle = "#FFF8";
+            } else {
+                this.ctx.fillStyle = "#FFF3";
+            }
+            if (this.champion == bird) {
+                this.ctx.strokeStyle = "#F0F";
+            } else {
+                this.ctx.strokeStyle = "#FFF";
+            }
             this.ctx.beginPath();
             this.ctx.arc(bird.pos.x, bird.pos.y, bird.radius(), 0, 2 * Math.PI);
             this.ctx.stroke();
@@ -268,44 +351,53 @@ const boids = function () {
             console.log(`start simulation on ${element}`);
             sandbox = new Sandbox(element);
 
-            var lastAnimateInMs = null;
             var lastDrawInMs = null;
-            var avgAnimatePeriodInMs = null;
             var avgDrawPeriodInMs = null;
-
-            var animatePeriodInMs = 1000 / 200;
-
-            var animate = () => {
-                var currentTimeInMs = Date.now();
-                var deltaTimeInMs = 0;
-                if (lastAnimateInMs != null) {
-                    deltaTimeInMs = currentTimeInMs - lastAnimateInMs;
-                }
-
-                sandbox.animate(Math.min(deltaTimeInMs, 10 * animatePeriodInMs) / 1000);
-
-                lastAnimateInMs = currentTimeInMs;
-                if (deltaTimeInMs > 0) {
-                    if (avgAnimatePeriodInMs != null) {
-                        avgAnimatePeriodInMs = avgAnimatePeriodInMs * 0.95 + deltaTimeInMs * 0.05;
-                    } else {
-                        avgAnimatePeriodInMs = deltaTimeInMs;
-                    }
-                }
-
-                var fixed = animatePeriodInMs;
-                if (avgAnimatePeriodInMs) {
-                    fixed -= avgAnimatePeriodInMs - animatePeriodInMs;
-                    fixed = Math.max(fixed, 0);
-                }
-                setTimeout(animate, fixed);
-            }
-            animate();
+            var outlivedCount = null;
+            var randText = Math.random();
 
             var drawPeriodInMs = 1000 / 60;
             var redraw = () => {
                 var currentTimeInMs = Date.now();
-                sandbox.draw(avgAnimatePeriodInMs, avgDrawPeriodInMs);
+                if (sandbox.champion != null) {
+                    sandbox.animate(drawPeriodInMs / 1000);
+                    if (sandbox.deadCount == 0) {
+                        outlivedCount = sandbox.deadCount;
+                        sandbox.draw(avgDrawPeriodInMs, `cross fingers...`);
+                    } else if (sandbox.champion.isAlive) {
+                        outlivedCount = sandbox.deadCount;
+                        var deadPercent = (100 * sandbox.deadCount / sandbox.initialCount).toFixed(1);
+                        sandbox.draw(avgDrawPeriodInMs, `it started, ${deadPercent}% are not anymore...`);
+                    } else {
+                        var outlivedPercent = (100 * outlivedCount / (sandbox.initialCount - 1)).toFixed(1);
+                        var text = null;
+                        if (outlivedPercent < 50) {
+                            if (randText < 0.3)
+                                text = `lame... didn't even counted.`;
+                            else if (randText < 0.6)
+                                text = `what was that ?`;
+                            else
+                                text = `did you understood the rules ?`;
+                        } else if (outlivedPercent < 70) {
+                            text = `your planet outlived only ${outlivedPercent}%, worth than random`;
+                        } else if (outlivedPercent < 80) {
+                            text = `your planet outlived ${outlivedPercent}%, mediocr-ish`;
+                        } else if (outlivedPercent < 90) {
+                            text = `your planet outlived ${outlivedPercent}%, not bad but would not have choosen this one...`;
+                        } else if (outlivedPercent < 95) {
+                            text = `your planet outlived ${outlivedPercent}%, starts to be good`;
+                        } else if (outlivedPercent < 97.5) {
+                            text = `your planet outlived ${outlivedPercent}%, wow, almost`;
+                        } else if (outlivedPercent != 100) {
+                            text = `${outlivedPercent}%, wow !!`;
+                        } else {
+                            text = `respect. could not do better.`;
+                        }
+                        sandbox.draw(avgDrawPeriodInMs, text);
+                    }
+                } else {
+                    sandbox.draw(avgDrawPeriodInMs, "choose your planet !");
+                }
 
                 var deltaTimeInMs = 0;
                 if (lastDrawInMs != null) {
@@ -322,10 +414,10 @@ const boids = function () {
 
                 var fixed = drawPeriodInMs;
                 if (avgDrawPeriodInMs) {
-                    fixed -= avgDrawPeriodInMs - animatePeriodInMs;
+                    fixed -= avgDrawPeriodInMs - drawPeriodInMs;
                     fixed = Math.max(fixed, 0);
                 }
-                setTimeout(redraw, drawPeriodInMs);
+                setTimeout(redraw, fixed);
             }
             redraw();
         }
