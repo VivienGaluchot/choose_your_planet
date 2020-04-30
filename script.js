@@ -150,12 +150,13 @@ const boids = function () {
     class Sandbox {
         constructor(element) {
             this.canvas = element;
-            this.pixelPerUnit = 25;
             this.dpr = window.devicePixelRatio || 1;
 
             var rect = this.canvas.getBoundingClientRect();
             this.canvas.width = rect.width * this.dpr;
             this.canvas.height = rect.height * this.dpr;
+
+            this.pixelPerUnit = rect.width / 25;
 
             this.ctx = this.canvas.getContext("2d");
 
@@ -328,15 +329,20 @@ const boids = function () {
 
         drawBird(bird) {
             this.ctx.save();
-            if (bird.isHovered) {
-                this.ctx.fillStyle = "#FFF8";
-            } else {
-                this.ctx.fillStyle = "#FFF3";
-            }
             if (this.champion == bird) {
                 this.ctx.strokeStyle = "#F0F";
+                if (bird.isHovered) {
+                    this.ctx.fillStyle = "#F0F8";
+                } else {
+                    this.ctx.fillStyle = "#F0F3";
+                }
             } else {
                 this.ctx.strokeStyle = "#FFF";
+                if (bird.isHovered) {
+                    this.ctx.fillStyle = "#FFF8";
+                } else {
+                    this.ctx.fillStyle = "#FFF3";
+                }
             }
             this.ctx.beginPath();
             this.ctx.arc(bird.pos.x, bird.pos.y, bird.radius(), 0, 2 * Math.PI);
@@ -363,7 +369,7 @@ const boids = function () {
                     sandbox.animate(drawPeriodInMs / 1000);
                     if (sandbox.deadCount == 0) {
                         outlivedCount = sandbox.deadCount;
-                        sandbox.draw(avgDrawPeriodInMs, `cross fingers...`);
+                        sandbox.draw(avgDrawPeriodInMs, `right, now cross your fingers and watch...`);
                     } else if (sandbox.champion.isAlive) {
                         outlivedCount = sandbox.deadCount;
                         var deadPercent = (100 * sandbox.deadCount / sandbox.initialCount).toFixed(1);
@@ -372,26 +378,32 @@ const boids = function () {
                         var outlivedPercent = (100 * outlivedCount / (sandbox.initialCount - 1)).toFixed(1);
                         var text = null;
                         if (outlivedPercent < 50) {
-                            if (randText < 0.3)
-                                text = `lame... I didn't even counted.`;
+                            if (randText < 0.2)
+                                text = `lame... I didn't even count.`;
+                            else if (randText < 0.4)
+                                text = `player of the year`;
                             else if (randText < 0.6)
                                 text = `what was that ?`;
+                            else if (randText < 0.8)
+                                text = `brilliant`;
                             else
                                 text = `did you understood the rules ?`;
                         } else if (outlivedPercent < 70) {
                             text = `your planet outlived only ${outlivedPercent}%, was it random ?`;
                         } else if (outlivedPercent < 80) {
-                            text = `your planet outlived ${outlivedPercent}%, mediocr-ish`;
+                            text = `your planet outlived ${outlivedPercent}%, not bag... for a tea bag`;
                         } else if (outlivedPercent < 90) {
                             text = `your planet outlived ${outlivedPercent}%, not bad but would not have choosen this one...`;
                         } else if (outlivedPercent < 95) {
                             text = `your planet outlived ${outlivedPercent}%, starts to be good`;
                         } else if (outlivedPercent < 97.5) {
                             text = `your planet outlived ${outlivedPercent}%, wow, almost`;
-                        } else if (outlivedPercent != 100) {
+                        } else if (outlivedPercent < 100) {
                             text = `${outlivedPercent}%, wow !!`;
-                        } else {
+                        } else if (outlivedPercent == 100) {
                             text = `respect. could not do better.`;
+                        } else {
+                            text = `cheat or bug ?`;
                         }
                         sandbox.draw(avgDrawPeriodInMs, text);
                     }
