@@ -367,12 +367,18 @@ const boids = function () {
             var drawPeriodInMs = 1000 / 60;
             var redraw = () => {
                 var currentTimeInMs = Date.now();
+                var deltaTimeInMs = 0;
+                if (lastDrawInMs != null) {
+                    deltaTimeInMs = currentTimeInMs - lastDrawInMs;
+                }
+                lastDrawInMs = currentTimeInMs;
+
                 if (sandbox.champion != null) {
                     sandbox.animate(drawPeriodInMs / 1000);
                     if (sandbox.deadCount == 0) {
                         outlivedCount = sandbox.deadCount;
                         sandbox.draw(avgDrawPeriodInMs, `right, now cross your fingers and watch...`);
-                    } else if (sandbox.champion.isAlive) {
+                    } else if (sandbox.champion.isAlive && sandbox.deadCount < (sandbox.initialCount - 1)) {
                         outlivedCount = sandbox.deadCount;
                         var deadPercent = (100 * sandbox.deadCount / sandbox.initialCount).toFixed(1);
                         sandbox.draw(avgDrawPeriodInMs, `it started, ${deadPercent}% are not anymore...`);
@@ -413,11 +419,6 @@ const boids = function () {
                     sandbox.draw(avgDrawPeriodInMs, "choose your planet !");
                 }
 
-                var deltaTimeInMs = 0;
-                if (lastDrawInMs != null) {
-                    deltaTimeInMs = currentTimeInMs - lastDrawInMs;
-                }
-                lastDrawInMs = currentTimeInMs;
                 if (deltaTimeInMs > 0) {
                     if (avgDrawPeriodInMs != null) {
                         avgDrawPeriodInMs = avgDrawPeriodInMs * 0.95 + deltaTimeInMs * 0.05;
