@@ -246,24 +246,26 @@ const boids = function () {
 
         animate(deltaTimeInS) {
             for (var pair of pairs(this.birds)) {
-                var ba = pair.first.pos.minus(pair.second.pos);
+                if (pair.first.mass > 0 && pair.second.mass > 0) {
+                    var ba = pair.first.pos.minus(pair.second.pos);
 
-                // collapse
-                if (ba.norm() < pair.first.radius() + pair.second.radius()) {
-                    if (pair.first.mass >= pair.second.mass) {
-                        pair.first.mass += pair.second.mass;
-                        pair.second.mass = 0;
-                        pair.second.isAlive = false;
-                    } else {
-                        pair.second.mass += pair.first.mass;
-                        pair.first.mass = 0;
-                        pair.first.isAlive = false;
+                    // collapse
+                    if (ba.norm() < pair.first.radius() + pair.second.radius()) {
+                        if (pair.first.mass >= pair.second.mass) {
+                            pair.first.mass += pair.second.mass;
+                            pair.second.mass = 0;
+                            pair.second.isAlive = false;
+                        } else {
+                            pair.second.mass += pair.first.mass;
+                            pair.first.mass = 0;
+                            pair.first.isAlive = false;
+                        }
+                        this.deadCount += 1;
                     }
-                    this.deadCount += 1;
                 }
 
-                // gravity
                 if (pair.first.mass > 0 && pair.second.mass > 0) {
+                    // gravity
                     var grv = ph.computeGravity(0.005, ba, pair.first.mass, pair.second.mass);
                     pair.first.applyForce(grv.a);
                     pair.second.applyForce(grv.b);
