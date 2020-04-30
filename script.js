@@ -379,7 +379,7 @@ const boids = function () {
                             else
                                 text = `did you understood the rules ?`;
                         } else if (outlivedPercent < 70) {
-                            text = `your planet outlived only ${outlivedPercent}%, was it than random ?`;
+                            text = `your planet outlived only ${outlivedPercent}%, was it random ?`;
                         } else if (outlivedPercent < 80) {
                             text = `your planet outlived ${outlivedPercent}%, mediocr-ish`;
                         } else if (outlivedPercent < 90) {
