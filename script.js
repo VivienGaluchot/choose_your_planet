@@ -302,9 +302,9 @@ const boids = function () {
             // pre rescale draw
             this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
             if (text) {
-                this.ctx.font = "25px Verdana";
+                this.ctx.font = "18px Verdana";
                 this.ctx.fillStyle = "#FFFA";
-                this.ctx.fillText(text, 10, 35);
+                this.ctx.fillText(text, 10, 28);
             }
             if (avgDrawPeriodInMs) {
                 this.ctx.fillStyle = "#FFF5";
@@ -373,13 +373,13 @@ const boids = function () {
                         var text = null;
                         if (outlivedPercent < 50) {
                             if (randText < 0.3)
-                                text = `lame... didn't even counted.`;
+                                text = `lame... I didn't even counted.`;
                             else if (randText < 0.6)
                                 text = `what was that ?`;
                             else
                                 text = `did you understood the rules ?`;
                         } else if (outlivedPercent < 70) {
-                            text = `your planet outlived only ${outlivedPercent}%, worth than random`;
+                            text = `your planet outlived only ${outlivedPercent}%, was it than random ?`;
                         } else if (outlivedPercent < 80) {
                             text = `your planet outlived ${outlivedPercent}%, mediocr-ish`;
                         } else if (outlivedPercent < 90) {

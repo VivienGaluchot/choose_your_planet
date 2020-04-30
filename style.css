@@ -46,6 +46,18 @@ a:visited {
   color: #c175df;
 }
 
+a.button {
+  padding: .3rem;
+  border-radius: .2rem;
+  border: 1px solid #87b6eb;
+  color: #87b6eb;
+  text-decoration: none;
+}
+
+a.button:hover {
+  background-color: #FFF2;
+}
+
 .new-date {
   color: #6b6564;
   border-right: 1px solid #6b6564;
@@ -68,7 +80,8 @@ footer {
   display: inline-block;
   background-color: #0b0505;
   border: 1px solid #554e4c;
-  width: calc(100% + 2*2rem);
+  max-width: calc(100% + 2*2rem);
+  width: 80vh;
   height: 80vh;
   margin: 1rem -2rem;
   box-sizing: border-box;
