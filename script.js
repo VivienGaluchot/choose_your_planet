@@ -391,32 +391,32 @@ const boids = function () {
                             else if (randText < 0.4)
                                 text = `player of the year`;
                             else if (randText < 0.6)
-                                text = `what was that ?`;
+                                text = `what was that?`;
                             else if (randText < 0.8)
-                                text = `brilliant`;
+                                text = `brilliant init'?`;
                             else
-                                text = `did you understood the rules ?`;
+                                text = `did you understand the rules?`;
                         } else if (outlivedPercent < 70) {
-                            text = `your planet outlived only ${outlivedPercent}%, was it random ?`;
+                            text = `your planet outlived only ${outlivedPercent}%, was it random?`;
                         } else if (outlivedPercent < 80) {
-                            text = `your planet outlived ${outlivedPercent}%, not bag... for a tea bag`;
+                            text = `your planet outlived ${outlivedPercent}%, not bad... for a tea bag`;
                         } else if (outlivedPercent < 90) {
                             text = `your planet outlived ${outlivedPercent}%, not bad but would not have choosen this one...`;
                         } else if (outlivedPercent < 95) {
-                            text = `your planet outlived ${outlivedPercent}%, starts to be good`;
+                            text = `your planet outlived ${outlivedPercent}%, starting to be good`;
                         } else if (outlivedPercent < 97.5) {
                             text = `your planet outlived ${outlivedPercent}%, wow, almost`;
                         } else if (outlivedPercent < 100) {
-                            text = `${outlivedPercent}%, wow !!`;
+                            text = `${outlivedPercent}%, wow!!`;
                         } else if (outlivedPercent == 100) {
                             text = `respect. could not do better.`;
                         } else {
-                            text = `cheat or bug ?`;
+                            text = `cheat or bug?`;
                         }
                         sandbox.draw(avgDrawPeriodInMs, text);
                     }
                 } else {
-                    sandbox.draw(avgDrawPeriodInMs, "choose your planet !");
+                    sandbox.draw(avgDrawPeriodInMs, "choose your planet!");
                 }
 
                 if (deltaTimeInMs > 0) {
