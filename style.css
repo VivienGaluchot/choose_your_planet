@@ -17,9 +17,9 @@ html, body {
 
 content {
   background-color: #1c1a1a;
-  padding: 3rem;
+  padding: 1rem;
   display: inline-block;
-  width: calc(100% - 2 * 3rem);
+  width: calc(100% - 2 * 1rem);
 }
 
 .code {
@@ -68,7 +68,6 @@ footer {
   display: inline-block;
   background-color: #0b0505;
   border: 1px solid #554e4c;
-  max-width: calc(100% + 2*2rem);
   width: 100%;
   max-height: 100vw;
   height: 80vh;
