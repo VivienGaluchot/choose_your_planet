@@ -130,7 +130,7 @@ const ph = function () {
     }
 }();
 
-const boids = function () {
+const choose_your_planet = function () {
     function* pairs(iterable) {
         for (var i = 0; i < iterable.length; i++) {
             for (var j = i + 1; j < iterable.length; j++) {
@@ -349,13 +349,64 @@ const boids = function () {
     }
 
     var sandbox = null;
+    var randText = null;
+    var outlivedCount = null;
+
+    function reset(sandbox_el) {
+        sandbox = new Sandbox(sandbox_el);
+        randText = Math.random();
+        outlivedCount = null;
+    }
+
+    function getDialog() {
+        if (sandbox.champion != null) {
+            if (sandbox.deadCount == 0) {
+                outlivedCount = sandbox.deadCount;
+                return `right, now cross your fingers and watch...`;
+            } else if (sandbox.champion.isAlive && sandbox.deadCount < (sandbox.initialCount - 1)) {
+                outlivedCount = sandbox.deadCount;
+                var deadPercent = (100 * sandbox.deadCount / sandbox.initialCount).toFixed(1);
+                return `it started, ${deadPercent}% are not anymore...`;
+            } else {
+                var outlivedPercent = (100 * outlivedCount / (sandbox.initialCount - 1)).toFixed(1);
+                if (outlivedPercent < 50) {
+                    if (randText < 0.2)
+                        return `lame... I didn't even count.`;
+                    else if (randText < 0.4)
+                        return `player of the year`;
+                    else if (randText < 0.6)
+                        return `what was that?`;
+                    else if (randText < 0.8)
+                        return `brilliant init'?`;
+                    else
+                        return `did you understand the rules?`;
+                } else if (outlivedPercent < 70) {
+                    return `your planet outlived only ${outlivedPercent}%, was it random?`;
+                } else if (outlivedPercent < 80) {
+                    return `your planet outlived ${outlivedPercent}%, not bad... for a tea bag`;
+                } else if (outlivedPercent < 90) {
+                    return `your planet outlived ${outlivedPercent}%, not bad but would not have choosen this one...`;
+                } else if (outlivedPercent < 95) {
+                    return `your planet outlived ${outlivedPercent}%, starting to be good`;
+                } else if (outlivedPercent < 97.5) {
+                    return `your planet outlived ${outlivedPercent}%, wow, almost`;
+                } else if (outlivedPercent < 100) {
+                    return `${outlivedPercent}%, wow!!`;
+                } else if (outlivedPercent == 100) {
+                    return `respect. could not do better.`;
+                } else {
+                    return `cheat or bug?`;
+                }
+            }
+        } else {
+            return "choose your planet!";
+        }
+    }
 
     return {
-        reset:(sandbox_el) => {
-            sandbox = new Sandbox(sandbox_el);
-        },
+        reset:reset,
         simulate: (sandbox_el, dialog_el) => {
-            sandbox = new Sandbox(sandbox_el);
+            reset(sandbox_el);
 
             function dialog(text) {
                 dialog_el.innerHTML = text;
@@ -363,8 +414,6 @@ const boids = function () {
 
             var lastDrawInMs = null;
             var avgDrawPeriodInMs = null;
-            var outlivedCount = null;
-            var randText = Math.random();
 
             var drawPeriodInMs = 1000 / 60;
             var redraw = () => {
@@ -375,51 +424,11 @@ const boids = function () {
                 }
                 lastDrawInMs = currentTimeInMs;
 
+                
                 if (sandbox.champion != null) {
                     sandbox.animate(drawPeriodInMs / 1000);
-                    if (sandbox.deadCount == 0) {
-                        outlivedCount = sandbox.deadCount;
-                        dialog(`right, now cross your fingers and watch...`);
-                    } else if (sandbox.champion.isAlive && sandbox.deadCount < (sandbox.initialCount - 1)) {
-                        outlivedCount = sandbox.deadCount;
-                        var deadPercent = (100 * sandbox.deadCount / sandbox.initialCount).toFixed(1);
-                        dialog(`it started, ${deadPercent}% are not anymore...`);
-                    } else {
-                        var outlivedPercent = (100 * outlivedCount / (sandbox.initialCount - 1)).toFixed(1);
-                        var text = null;
-                        if (outlivedPercent < 50) {
-                            if (randText < 0.2)
-                                text = `lame... I didn't even count.`;
-                            else if (randText < 0.4)
-                                text = `player of the year`;
-                            else if (randText < 0.6)
-                                text = `what was that?`;
-                            else if (randText < 0.8)
-                                text = `brilliant init'?`;
-                            else
-                                text = `did you understand the rules?`;
-                        } else if (outlivedPercent < 70) {
-                            text = `your planet outlived only ${outlivedPercent}%, was it random?`;
-                        } else if (outlivedPercent < 80) {
-                            text = `your planet outlived ${outlivedPercent}%, not bad... for a tea bag`;
-                        } else if (outlivedPercent < 90) {
-                            text = `your planet outlived ${outlivedPercent}%, not bad but would not have choosen this one...`;
-                        } else if (outlivedPercent < 95) {
-                            text = `your planet outlived ${outlivedPercent}%, starting to be good`;
-                        } else if (outlivedPercent < 97.5) {
-                            text = `your planet outlived ${outlivedPercent}%, wow, almost`;
-                        } else if (outlivedPercent < 100) {
-                            text = `${outlivedPercent}%, wow!!`;
-                        } else if (outlivedPercent == 100) {
-                            text = `respect. could not do better.`;
-                        } else {
-                            text = `cheat or bug?`;
-                        }
-                        dialog(text);
-                    }
-                } else {
-                    dialog("choose your planet!");
                 }
+                dialog(getDialog());
                 sandbox.draw(avgDrawPeriodInMs);
 
                 if (deltaTimeInMs > 0) {
@@ -443,12 +452,12 @@ const boids = function () {
 }();
 
 
-// call the boids.simulate when document is ready
+// call the choose_your_planet.simulate when document is ready
 document.addEventListener("DOMContentLoaded", (e) => {
-    boids.simulate(document.getElementById("sandbox"), document.getElementById("dialog"));
+    choose_your_planet.simulate(document.getElementById("sandbox"), document.getElementById("dialog"));
 });
 
 function retry() {
-    boids.reset(document.getElementById("sandbox"));
+    choose_your_planet.reset(document.getElementById("sandbox"));
     return false;
 }
