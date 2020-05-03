@@ -14,7 +14,14 @@
         <content>
             <h1 class="code">Choose Your Planet</h1>
             <p>Big eat little. Will you find the winnle ?</p>
-            <div><a href="#" onclick="document.location.reload();" class="button">Retry</a></div>
+            <div class="d-flex">
+                <div style="flex-grow: 1;">
+                    <div id="dialog"></div>
+                </div>
+                <div>
+                    <a href="#" onclick="document.location.reload();" class="retry-button">Retry</a>
+                </div>
+            </div>
             <canvas id="sandbox"></canvas>
             <p>Stupid game.</p>
         </content>

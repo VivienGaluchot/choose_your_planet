@@ -46,18 +46,6 @@ a:visited {
   color: #c175df;
 }
 
-a.button {
-  padding: .3rem;
-  border-radius: .2rem;
-  border: 1px solid #87b6eb;
-  color: #87b6eb;
-  text-decoration: none;
-}
-
-a.button:hover {
-  background-color: #FFF2;
-}
-
 .new-date {
   color: #6b6564;
   border-right: 1px solid #6b6564;
@@ -81,8 +69,39 @@ footer {
   background-color: #0b0505;
   border: 1px solid #554e4c;
   max-width: calc(100% + 2*2rem);
-  width: 80vh;
+  width: 100%;
+  max-height: 100vw;
   height: 80vh;
   margin: 1rem -2rem;
   box-sizing: border-box;
+}
+
+#dialog {
+  font-size: 1.2rem;
+  text-align: left;
+  border-radius: .2rem 0 0 .2rem;
+  border: 1px solid #6b6564;
+  padding: .3rem;
+  box-sizing: border-box;
+  background-color: #0b0505;
+}
+
+a.retry-button {
+  padding: .3rem;
+  border-radius: 0 .2rem .2rem 0;
+  border: 1px solid #87b6eb;
+  color: #87b6eb;
+  text-decoration: none;
+  display: inline-block;
+  font-size: 1.2rem;
+  height: 100%;
+  box-sizing: border-box;
+}
+
+a.retry-button:hover {
+  background-color: #FFF2;
+}
+
+.d-flex {
+  display: flex;
 }

@@ -139,7 +139,7 @@ const boids = function () {
         }
     }
 
-    class Bird extends ph.Mobile {
+    class Planet extends ph.Mobile {
         constructor() {
             super();
             this.isHovered = false;
@@ -153,26 +153,27 @@ const boids = function () {
             this.dpr = window.devicePixelRatio || 1;
 
             var rect = this.canvas.getBoundingClientRect();
+            var side = Math.min(rect.width, rect.height);
             this.canvas.width = rect.width * this.dpr;
             this.canvas.height = rect.height * this.dpr;
 
-            this.pixelPerUnit = rect.width / 25;
+            this.pixelPerUnit = side / 22;
 
             this.ctx = this.canvas.getContext("2d");
 
-            this.birds = [];
+            this.planets = [];
             for (var i = -10; i <= 10; i++) {
                 for (var j = -10; j <= 10; j++) {
-                    var bird = new Bird();
-                    bird.pos = new mt.Vect(i, j);
-                    bird.mass = 1 * Math.random() + 0.2;
-                    this.birds.push(bird);
+                    var planet = new Planet();
+                    planet.pos = new mt.Vect(i, j);
+                    planet.mass = 2 * Math.random() + 0.3;
+                    this.planets.push(planet);
                 }
             }
 
             this.champion = null;
             this.deadCount = 0;
-            this.initialCount = this.birds.length;
+            this.initialCount = this.planets.length;
 
             element.onclick = event => {
                 if (this.champion != null)
@@ -191,10 +192,10 @@ const boids = function () {
                         mouse.x * imatrix.b + mouse.y * imatrix.d + imatrix.f
                     );
 
-                    for (var bird of it.birds) {
-                        var ba = bird.pos.minus(transformedMouse);
-                        if (ba.norm() < 2 * bird.radius()) {
-                            it.champion = bird;
+                    for (var planet of it.planets) {
+                        var ba = planet.pos.minus(transformedMouse);
+                        if (ba.norm() < 2 * planet.radius()) {
+                            it.champion = planet;
                             return;
                         }
                     }
@@ -216,9 +217,9 @@ const boids = function () {
                         mouse.x * imatrix.b + mouse.y * imatrix.d + imatrix.f
                     );
 
-                    for (var bird of it.birds) {
-                        var ba = bird.pos.minus(transformedMouse);
-                        bird.isHovered = ba.norm() < 2 * bird.radius();
+                    for (var planet of it.planets) {
+                        var ba = planet.pos.minus(transformedMouse);
+                        planet.isHovered = ba.norm() < 2 * planet.radius();
                     }
                 });
             };
@@ -245,7 +246,7 @@ const boids = function () {
         }
 
         animate(deltaTimeInS) {
-            for (var pair of pairs(this.birds)) {
+            for (var pair of pairs(this.planets)) {
                 if (pair.first.mass > 0 && pair.second.mass > 0) {
                     var ba = pair.first.pos.minus(pair.second.pos);
 
@@ -272,45 +273,40 @@ const boids = function () {
                 }
             }
 
-            this.birds = this.birds.filter(bird => bird.mass > 0);
+            this.planets = this.planets.filter(planet => planet.mass > 0);
 
-            for (var bird of this.birds) {
-                bird.animate(deltaTimeInS);
+            for (var planet of this.planets) {
+                planet.animate(deltaTimeInS);
             }
 
             var bounds = this.bounds();
-            for (var bird of this.birds) {
-                if (bird.pos.x - bird.radius() < bounds.x) {
-                    bird.pos.x = bounds.x + bird.radius();
-                    bird.vel.x *= -0.5;
+            for (var planet of this.planets) {
+                if (planet.pos.x - planet.radius() < bounds.x) {
+                    planet.pos.x = bounds.x + planet.radius();
+                    planet.vel.x *= -0.5;
                 }
-                if (bird.pos.x + bird.radius() > bounds.x + bounds.w) {
-                    bird.pos.x = bounds.x + bounds.w - bird.radius();
-                    bird.vel.x *= -0.5;
+                if (planet.pos.x + planet.radius() > bounds.x + bounds.w) {
+                    planet.pos.x = bounds.x + bounds.w - planet.radius();
+                    planet.vel.x *= -0.5;
                 }
-                if (bird.pos.y - bird.radius() < bounds.y) {
-                    bird.pos.y = bounds.y + bird.radius();
-                    bird.vel.y *= -0.5;
+                if (planet.pos.y - planet.radius() < bounds.y) {
+                    planet.pos.y = bounds.y + planet.radius();
+                    planet.vel.y *= -0.5;
                 }
-                if (bird.pos.y + bird.radius() > bounds.y + bounds.h) {
-                    bird.pos.y = bounds.y + bounds.h - bird.radius();
-                    bird.vel.y *= -0.5;
+                if (planet.pos.y + planet.radius() > bounds.y + bounds.h) {
+                    planet.pos.y = bounds.y + bounds.h - planet.radius();
+                    planet.vel.y *= -0.5;
                 }
             }
         }
 
-        draw(avgDrawPeriodInMs = null, text = null) {
+        draw(avgDrawPeriodInMs = null) {
             this.ctx.save();
 
             // pre rescale draw
             this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
-            if (text) {
-                this.ctx.font = "18px Verdana";
-                this.ctx.fillStyle = "#FFFA";
-                this.ctx.fillText(text, 10, 28);
-            }
             if (avgDrawPeriodInMs) {
-                this.ctx.fillStyle = "#FFF5";
+                this.ctx.fillStyle = "#FFF2";
                 this.ctx.font = "12px Verdana";
                 this.ctx.fillText(`draw @ ${(1000 / avgDrawPeriodInMs).toFixed(1)} Hz`, 10, this.canvas.height - 10);
             }
@@ -321,43 +317,44 @@ const boids = function () {
                 this.ctx.strokeStyle = "#DDD";
                 this.ctx.lineWidth = 1 / this.pixelPerUnit;
 
-                for (var bird of this.birds) {
-                    this.drawBird(bird);
+                for (var planet of this.planets) {
+                    this.drawPlanet(planet);
                 }
             });
 
             this.ctx.restore();
         }
 
-        drawBird(bird) {
+        drawPlanet(planet) {
             this.ctx.save();
-            if (this.champion == bird) {
-                this.ctx.strokeStyle = "#F0F";
-                if (bird.isHovered) {
-                    this.ctx.fillStyle = "#F0F8";
+            this.ctx.beginPath();
+            this.ctx.arc(planet.pos.x, planet.pos.y, planet.radius(), 0, 2 * Math.PI);
+            if (this.champion == planet) {
+                // champion
+                if (planet.isHovered) {
+                    this.ctx.fillStyle = "#F0F";
                 } else {
-                    this.ctx.fillStyle = "#F0F3";
+                    this.ctx.fillStyle = "#F0F8";
                 }
             } else {
-                this.ctx.strokeStyle = "#FFF";
-                if (bird.isHovered) {
-                    this.ctx.fillStyle = "#FFF8";
+                if (planet.isHovered) {
+                    this.ctx.fillStyle = "#FFF";
                 } else {
-                    this.ctx.fillStyle = "#FFF3";
+                    this.ctx.fillStyle = "#FFF5";
                 }
             }
-            this.ctx.beginPath();
-            this.ctx.arc(bird.pos.x, bird.pos.y, bird.radius(), 0, 2 * Math.PI);
-            this.ctx.stroke();
             this.ctx.fill();
             this.ctx.restore();
         };
     }
 
     return {
-        simulate: (element) => {
-            console.log(`start simulation on ${element}`);
-            sandbox = new Sandbox(element);
+        simulate: (sandbox_el, dialog_el) => {
+            sandbox = new Sandbox(sandbox_el);
+
+            function dialog(text) {
+                dialog_el.innerHTML = text;
+            }
 
             var lastDrawInMs = null;
             var avgDrawPeriodInMs = null;
@@ -377,11 +374,13 @@ const boids = function () {
                     sandbox.animate(drawPeriodInMs / 1000);
                     if (sandbox.deadCount == 0) {
                         outlivedCount = sandbox.deadCount;
-                        sandbox.draw(avgDrawPeriodInMs, `right, now cross your fingers and watch...`);
+                        dialog(`right, now cross your fingers and watch...`);
+                        sandbox.draw(avgDrawPeriodInMs);
                     } else if (sandbox.champion.isAlive && sandbox.deadCount < (sandbox.initialCount - 1)) {
                         outlivedCount = sandbox.deadCount;
                         var deadPercent = (100 * sandbox.deadCount / sandbox.initialCount).toFixed(1);
-                        sandbox.draw(avgDrawPeriodInMs, `it started, ${deadPercent}% are not anymore...`);
+                        dialog(`it started, ${deadPercent}% are not anymore...`);
+                        sandbox.draw(avgDrawPeriodInMs);
                     } else {
                         var outlivedPercent = (100 * outlivedCount / (sandbox.initialCount - 1)).toFixed(1);
                         var text = null;
@@ -413,10 +412,12 @@ const boids = function () {
                         } else {
                             text = `cheat or bug?`;
                         }
-                        sandbox.draw(avgDrawPeriodInMs, text);
+                        dialog(text);
+                        sandbox.draw(avgDrawPeriodInMs);
                     }
                 } else {
-                    sandbox.draw(avgDrawPeriodInMs, "choose your planet!");
+                    dialog("choose your planet!");
+                    sandbox.draw(avgDrawPeriodInMs);
                 }
 
                 if (deltaTimeInMs > 0) {
@@ -442,5 +443,5 @@ const boids = function () {
 
 // call the boids.simulate when document is ready
 document.addEventListener("DOMContentLoaded", (e) => {
-    boids.simulate(document.getElementById("sandbox"));
+    boids.simulate(document.getElementById("sandbox"), document.getElementById("dialog"));
 });
