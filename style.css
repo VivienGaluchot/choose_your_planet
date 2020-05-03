@@ -101,6 +101,11 @@ a.retry-button:hover {
   background-color: #FFF2;
 }
 
+a.retry-button:focus,
+a.retry-button:active {
+  box-shadow: 0 0 0 .2rem #87b6eb80;
+}
+
 .d-flex {
   display: flex;
 }

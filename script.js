@@ -348,7 +348,12 @@ const boids = function () {
         };
     }
 
+    var sandbox = null;
+
     return {
+        reset:(sandbox_el) => {
+            sandbox = new Sandbox(sandbox_el);
+        },
         simulate: (sandbox_el, dialog_el) => {
             sandbox = new Sandbox(sandbox_el);
 
@@ -375,12 +380,10 @@ const boids = function () {
                     if (sandbox.deadCount == 0) {
                         outlivedCount = sandbox.deadCount;
                         dialog(`right, now cross your fingers and watch...`);
-                        sandbox.draw(avgDrawPeriodInMs);
                     } else if (sandbox.champion.isAlive && sandbox.deadCount < (sandbox.initialCount - 1)) {
                         outlivedCount = sandbox.deadCount;
                         var deadPercent = (100 * sandbox.deadCount / sandbox.initialCount).toFixed(1);
                         dialog(`it started, ${deadPercent}% are not anymore...`);
-                        sandbox.draw(avgDrawPeriodInMs);
                     } else {
                         var outlivedPercent = (100 * outlivedCount / (sandbox.initialCount - 1)).toFixed(1);
                         var text = null;
@@ -413,12 +416,11 @@ const boids = function () {
                             text = `cheat or bug?`;
                         }
                         dialog(text);
-                        sandbox.draw(avgDrawPeriodInMs);
                     }
                 } else {
                     dialog("choose your planet!");
-                    sandbox.draw(avgDrawPeriodInMs);
                 }
+                sandbox.draw(avgDrawPeriodInMs);
 
                 if (deltaTimeInMs > 0) {
                     if (avgDrawPeriodInMs != null) {
@@ -445,3 +447,8 @@ const boids = function () {
 document.addEventListener("DOMContentLoaded", (e) => {
     boids.simulate(document.getElementById("sandbox"), document.getElementById("dialog"));
 });
+
+function retry() {
+    boids.reset(document.getElementById("sandbox"));
+    return false;
+}
