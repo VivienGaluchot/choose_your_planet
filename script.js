@@ -170,7 +170,7 @@ const choose_your_planet = function () {
             this.deadCount = 0;
             this.initialCount = this.planets.length;
 
-            element.onclick = event => {
+            function handleClick(event) {
                 if (this.champion != null)
                     return;
                 var rect = this.canvas.getBoundingClientRect();
@@ -195,9 +195,24 @@ const choose_your_planet = function () {
                         }
                     }
                 });
-            }
+            };
+
+            element.onclick = event => {
+                event.preventDefault();
+                handleClick(event);
+            };
+
+            element.addEventListener("touchend", event => {
+                event.preventDefault();
+                var touches = evt.changedTouches;
+                for (var i = 0; i < touches.length; i++) {
+                    handleClick(touches[i]);
+                }
+            });
 
             element.onmousemove = event => {
+                event.preventDefault();
+
                 var rect = this.canvas.getBoundingClientRect();
                 var mouse = new mt.Vect(
                     (event.clientX - rect.left) * this.dpr,
