@@ -12,10 +12,6 @@ const mt = function () {
             checkNumber(y);
             this.x = x;
             this.y = y;
-            // cache
-            this._c_x = null;
-            this._c_y = null;
-            this._c_norm = null;
         }
 
         set(x = 0, y = 0) {
@@ -30,16 +26,14 @@ const mt = function () {
         }
 
         norm() {
-            if (this._c_x != this.x || this._c_y != this.y || this._c_norm == null) {
-                this._c_norm = Math.sqrt(this.x * this.x + this.y * this.y);
-            }
-            return this._c_norm;
+            return Math.sqrt(this.x * this.x + this.y * this.y);
         }
 
         normalizeInplace() {
-            if (this.norm() == NaN || this.norm() == 0)
+            var norm = this.norm();
+            if (norm == NaN || norm == 0)
                 throw Error("math error");
-            this.scaleInplace(1 / this.norm());
+            this.scaleInplace(1 / norm);
             return this;
         }
 
@@ -114,8 +108,9 @@ const ph = function () {
     }
 
     function computeGravity(G, ba, aMass, bMass) {
-        if (ba.norm() > 0 && aMass != 0 && bMass != 0) {
-            var magn = G * aMass * bMass / (ba.norm() * ba.norm());
+        var squaredNorm = ba.x * ba.x + ba.y * ba.y;
+        if (squaredNorm > 0 && aMass != 0 && bMass != 0) {
+            var magn = G * aMass * bMass / squaredNorm;
             var gra = ba.copy();
             gra.normalizeInplace().scaleInplace(magn);
             return { 'a': gra.copy().scaleInplace(-1), 'b': gra }
@@ -246,6 +241,30 @@ const choose_your_planet = function () {
         }
 
         animate(deltaTimeInS) {
+            for (var planet of this.planets) {
+                planet.animate(deltaTimeInS);
+            }
+
+            var bounds = this.bounds();
+            for (var planet of this.planets) {
+                if (planet.pos.x - planet.radius() < bounds.x) {
+                    planet.pos.x = bounds.x + planet.radius();
+                    planet.vel.x *= -0.5;
+                }
+                if (planet.pos.x + planet.radius() > bounds.x + bounds.w) {
+                    planet.pos.x = bounds.x + bounds.w - planet.radius();
+                    planet.vel.x *= -0.5;
+                }
+                if (planet.pos.y - planet.radius() < bounds.y) {
+                    planet.pos.y = bounds.y + planet.radius();
+                    planet.vel.y *= -0.5;
+                }
+                if (planet.pos.y + planet.radius() > bounds.y + bounds.h) {
+                    planet.pos.y = bounds.y + bounds.h - planet.radius();
+                    planet.vel.y *= -0.5;
+                }
+            }
+
             for (var pair of pairs(this.planets)) {
                 if (pair.first.mass > 0 && pair.second.mass > 0) {
                     var ba = pair.first.pos.minus(pair.second.pos);
@@ -274,30 +293,6 @@ const choose_your_planet = function () {
             }
 
             this.planets = this.planets.filter(planet => planet.mass > 0);
-
-            for (var planet of this.planets) {
-                planet.animate(deltaTimeInS);
-            }
-
-            var bounds = this.bounds();
-            for (var planet of this.planets) {
-                if (planet.pos.x - planet.radius() < bounds.x) {
-                    planet.pos.x = bounds.x + planet.radius();
-                    planet.vel.x *= -0.5;
-                }
-                if (planet.pos.x + planet.radius() > bounds.x + bounds.w) {
-                    planet.pos.x = bounds.x + bounds.w - planet.radius();
-                    planet.vel.x *= -0.5;
-                }
-                if (planet.pos.y - planet.radius() < bounds.y) {
-                    planet.pos.y = bounds.y + planet.radius();
-                    planet.vel.y *= -0.5;
-                }
-                if (planet.pos.y + planet.radius() > bounds.y + bounds.h) {
-                    planet.pos.y = bounds.y + bounds.h - planet.radius();
-                    planet.vel.y *= -0.5;
-                }
-            }
         }
 
         draw(avgDrawPeriodInMs = null) {
@@ -404,7 +399,7 @@ const choose_your_planet = function () {
     }
 
     return {
-        reset:reset,
+        reset: reset,
         simulate: (sandbox_el, dialog_el) => {
             reset(sandbox_el);
 
@@ -424,7 +419,7 @@ const choose_your_planet = function () {
                 }
                 lastDrawInMs = currentTimeInMs;
 
-                
+
                 if (sandbox.champion != null) {
                     sandbox.animate(drawPeriodInMs / 1000);
                 }

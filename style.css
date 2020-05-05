@@ -75,11 +75,19 @@ footer {
   box-sizing: border-box;
 }
 
+.colortouch {
+  background-color: #F0F8;
+  width: .5rem;
+  border: 1px solid #F0F;
+  border-right: none;
+  border-radius: .2rem 0 0 .2rem;
+}
+
 #dialog {
   font-size: 1.2rem;
   text-align: left;
-  border-radius: .2rem 0 0 .2rem;
-  border: 1px solid #6b6564;
+  border-top: 1px solid #6b6564;
+  border-bottom: 1px solid #6b6564;
   padding: .3rem;
   box-sizing: border-box;
   background-color: #0b0505;
@@ -101,8 +109,7 @@ a.retry-button:hover {
   background-color: #FFF2;
 }
 
-a.retry-button:focus,
-a.retry-button:active {
+a.retry-button:focus, a.retry-button:active {
   box-shadow: 0 0 0 .2rem #87b6eb80;
 }
 
