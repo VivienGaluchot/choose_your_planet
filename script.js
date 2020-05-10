@@ -396,7 +396,12 @@ const choose_your_planet = function () {
                 var deadPercent = (100 * sandbox.deadCount / sandbox.initialCount).toFixed(1);
                 return `it started, ${deadPercent}% are not anymore...`;
             } else {
-                var outlivedPercent = (100 * outlivedCount / (sandbox.initialCount - 1)).toFixed(1);
+                var outlivedPercent = null
+                if (sandbox.champion.isAlive) {
+                    outlivedPercent = 100;
+                } else {
+                    outlivedPercent = (100 * outlivedCount / (sandbox.initialCount - 1)).toFixed(1);
+                }
                 if (outlivedPercent < 50) {
                     if (randText < 0.2)
                         return `lame... I didn't even count.`;
