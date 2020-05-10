@@ -1,130 +1,3 @@
-const mt = function () {
-    function checkNumber(a) {
-        if (typeof a != "number")
-            throw Error("number expected");
-        if (isNaN(a))
-            throw Error("not a number");
-    }
-
-    class Vect {
-        constructor(x = 0, y = 0) {
-            checkNumber(x);
-            checkNumber(y);
-            this.x = x;
-            this.y = y;
-        }
-
-        set(x = 0, y = 0) {
-            checkNumber(x);
-            checkNumber(y);
-            this.x = x;
-            this.y = y;
-        }
-
-        copy() {
-            return new Vect(this.x, this.y);
-        }
-
-        norm() {
-            return Math.sqrt(this.x * this.x + this.y * this.y);
-        }
-
-        normalizeInplace() {
-            var norm = this.norm();
-            if (norm == NaN || norm == 0)
-                throw Error("math error");
-            this.scaleInplace(1 / norm);
-            return this;
-        }
-
-        setNorm(a) {
-            checkNumber(a);
-            if (a == NaN)
-                throw Error("math error");
-            this.normalizeInplace().scaleInplace(a);
-            return this;
-        }
-
-        addInplace(other) {
-            checkNumber(other.x);
-            checkNumber(other.y);
-            this.x += other.x;
-            this.y += other.y;
-            return this;
-        }
-
-        minus(other) {
-            checkNumber(other.x);
-            checkNumber(other.y);
-            return new Vect(this.x - other.x, this.y - other.y);
-        }
-
-        scaleInplace(a) {
-            checkNumber(a);
-            this.x *= a;
-            this.y *= a;
-            return this;
-        }
-
-        capInplace(a) {
-            checkNumber(a);
-            var norm = this.norm();
-            if (norm > a) {
-                this.setNorm(a);
-            }
-            return this;
-        }
-    }
-
-    return {
-        Vect: Vect
-    }
-}();
-
-const ph = function () {
-    class Mobile {
-        constructor() {
-            this.pos = new mt.Vect();
-            this.vel = new mt.Vect();
-            this.acc = new mt.Vect();
-            this.mass = 1;
-        }
-
-        applyForce(force) {
-            if (this.mass == 0)
-                throw Error("math error");
-            this.acc.addInplace(force.copy().scaleInplace(1 / this.mass));
-        }
-
-        animate(deltaTimeInS) {
-            this.vel.addInplace(this.acc);
-            this.pos.addInplace(this.vel.copy().scaleInplace(deltaTimeInS));
-            this.acc.set(0, 0);
-        }
-
-        radius() {
-            return 0.2 * Math.cbrt(this.mass);
-        }
-    }
-
-    function computeGravity(G, ba, aMass, bMass) {
-        var squaredNorm = ba.x * ba.x + ba.y * ba.y;
-        if (squaredNorm > 0 && aMass != 0 && bMass != 0) {
-            var magn = G * aMass * bMass / squaredNorm;
-            var gra = ba.copy();
-            gra.normalizeInplace().scaleInplace(magn);
-            return { 'a': gra.copy().scaleInplace(-1), 'b': gra }
-        } else {
-            return { 'a': new mt.Vect(), 'b': new mt.Vect() }
-        }
-    }
-
-    return {
-        Mobile: Mobile,
-        computeGravity: computeGravity
-    }
-}();
-
 const choose_your_planet = function () {
     function* pairs(iterable) {
         for (var i = 0; i < iterable.length; i++) {
@@ -158,16 +31,7 @@ const choose_your_planet = function () {
                 this.pixelPerUnit = side / 22;
 
             this.ctx = this.canvas.getContext("2d");
-
-            function randn_bm() {
-                let u = 0, v = 0;
-                while(u === 0) u = Math.random(); //Converting [0,1) to (0,1)
-                while(v === 0) v = Math.random();
-                let num = Math.sqrt( -2.0 * Math.log( u ) ) * Math.cos( 2.0 * Math.PI * v );
-                num = num / 10.0 + 0.5; // Translate to 0 -> 1
-                if (num > 1 || num < 0) return randn_bm(); // resample between 0 and 1
-                return num;
-            }
+            
             this.planets = [];
             for (var i = -10; i <= 10; i++) {
                 for (var j = -10; j <= 10; j++) {
@@ -175,7 +39,7 @@ const choose_your_planet = function () {
                     planet.pos = new mt.Vect(i, j);
                     if (washer)
                         planet.vel = new mt.Vect(-j, i).scaleInplace(.4);
-                    planet.mass = 10 * randn_bm() * randn_bm() * randn_bm();
+                    planet.mass = 10 * mt.randnBm() * mt.randnBm() * mt.randnBm();
                     this.planets.push(planet);
                 }
             }
@@ -483,16 +347,3 @@ const choose_your_planet = function () {
         }
     };
 }();
-
-
-// call the choose_your_planet.simulate when document is ready
-document.addEventListener("DOMContentLoaded", (e) => {
-    var washer = document.getElementById("whasher-checkbox").checked;
-    choose_your_planet.simulate(document.getElementById("sandbox"), document.getElementById("dialog"), washer);
-});
-
-function retry() {
-    var washer = document.getElementById("whasher-checkbox").checked;
-    choose_your_planet.reset(document.getElementById("sandbox"), washer);
-    return false;
-}
