@@ -143,7 +143,7 @@ const choose_your_planet = function () {
     }
 
     class Sandbox {
-        constructor(element) {
+        constructor(element, washer=false) {
             this.canvas = element;
             this.dpr = window.devicePixelRatio || 1;
 
@@ -152,16 +152,30 @@ const choose_your_planet = function () {
             this.canvas.width = side * this.dpr;
             this.canvas.height = side * this.dpr;
 
-            this.pixelPerUnit = side / 22;
+            if (washer)
+                this.pixelPerUnit = side / 26;
+            else
+                this.pixelPerUnit = side / 22;
 
             this.ctx = this.canvas.getContext("2d");
 
+            function randn_bm() {
+                let u = 0, v = 0;
+                while(u === 0) u = Math.random(); //Converting [0,1) to (0,1)
+                while(v === 0) v = Math.random();
+                let num = Math.sqrt( -2.0 * Math.log( u ) ) * Math.cos( 2.0 * Math.PI * v );
+                num = num / 10.0 + 0.5; // Translate to 0 -> 1
+                if (num > 1 || num < 0) return randn_bm(); // resample between 0 and 1
+                return num;
+            }
             this.planets = [];
             for (var i = -10; i <= 10; i++) {
                 for (var j = -10; j <= 10; j++) {
                     var planet = new Planet();
                     planet.pos = new mt.Vect(i, j);
-                    planet.mass = 2 * Math.random() + 0.3;
+                    if (washer)
+                        planet.vel = new mt.Vect(-j, i).scaleInplace(.4);
+                    planet.mass = 10 * randn_bm() * randn_bm() * randn_bm();
                     this.planets.push(planet);
                 }
             }
@@ -282,15 +296,23 @@ const choose_your_planet = function () {
 
                     // collapse
                     if (ba.norm() < pair.first.radius() + pair.second.radius()) {
+                        var big = null;
+                        var eaten = null;
                         if (pair.first.mass >= pair.second.mass) {
-                            pair.first.mass += pair.second.mass;
-                            pair.second.mass = 0;
-                            pair.second.isAlive = false;
+                            big = pair.first;
+                            eaten = pair.second;
                         } else {
-                            pair.second.mass += pair.first.mass;
-                            pair.first.mass = 0;
-                            pair.first.isAlive = false;
+                            big = pair.second;
+                            eaten = pair.first;
                         }
+                        var totalMass = big.mass + eaten.mass;
+                        var a = big.vel.copy().scaleInplace(big.mass / totalMass);
+                        var b = eaten.vel.copy().scaleInplace(eaten.mass / totalMass);
+                        big.vel = a.addInplace(b);
+                        big.mass += eaten.mass;
+                        eaten.mass = 0;
+                        eaten.isAlive = false;
+
                         this.deadCount += 1;
                     }
                 }
@@ -358,8 +380,8 @@ const choose_your_planet = function () {
     var randText = null;
     var outlivedCount = null;
 
-    function reset(sandbox_el) {
-        sandbox = new Sandbox(sandbox_el);
+    function reset(sandbox_el, washer) {
+        sandbox = new Sandbox(sandbox_el, washer);
         randText = Math.random();
         outlivedCount = null;
     }
@@ -411,8 +433,8 @@ const choose_your_planet = function () {
 
     return {
         reset: reset,
-        simulate: (sandbox_el, dialog_el) => {
-            reset(sandbox_el);
+        simulate: (sandbox_el, dialog_el, washer) => {
+            reset(sandbox_el, washer);
 
             function dialog(text) {
                 dialog_el.innerHTML = text;
@@ -460,10 +482,12 @@ const choose_your_planet = function () {
 
 // call the choose_your_planet.simulate when document is ready
 document.addEventListener("DOMContentLoaded", (e) => {
-    choose_your_planet.simulate(document.getElementById("sandbox"), document.getElementById("dialog"));
+    var washer = document.getElementById("whasher-checkbox").checked;
+    choose_your_planet.simulate(document.getElementById("sandbox"), document.getElementById("dialog"), washer);
 });
 
 function retry() {
-    choose_your_planet.reset(document.getElementById("sandbox"));
+    var washer = document.getElementById("whasher-checkbox").checked;
+    choose_your_planet.reset(document.getElementById("sandbox"), washer);
     return false;
 }

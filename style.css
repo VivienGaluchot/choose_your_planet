@@ -112,6 +112,17 @@ a.retry-button:focus, a.retry-button:active {
   box-shadow: 0 0 0 .2rem #87b6eb80;
 }
 
+.washer {
+  padding: .3rem;
+  border: 1px solid #87b6eb;
+  color: #87b6eb;
+  text-decoration: none;
+  display: inline-block;
+  font-size: 1.2rem;
+  height: 100%;
+  box-sizing: border-box;
+}
+
 .d-flex {
   display: flex;
   max-width: 80vh;
