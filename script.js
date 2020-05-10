@@ -148,9 +148,9 @@ const choose_your_planet = function () {
             this.dpr = window.devicePixelRatio || 1;
 
             var rect = this.canvas.getBoundingClientRect();
-            var side = Math.min(rect.width, rect.height);
-            this.canvas.width = rect.width * this.dpr;
-            this.canvas.height = rect.height * this.dpr;
+            var side = rect.width;
+            this.canvas.width = side * this.dpr;
+            this.canvas.height = side * this.dpr;
 
             this.pixelPerUnit = side / 22;
 

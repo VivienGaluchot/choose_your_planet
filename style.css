@@ -68,9 +68,8 @@ footer {
   display: inline-block;
   background-color: #0b0505;
   border: 1px solid #554e4c;
+  max-width: 80vh;
   width: 100%;
-  max-height: 100vw;
-  height: 80vh;
   margin: 1rem -2rem;
   box-sizing: border-box;
 }
@@ -115,4 +114,7 @@ a.retry-button:focus, a.retry-button:active {
 
 .d-flex {
   display: flex;
+  max-width: 80vh;
+  width: 100%;
+  margin: 0 auto;
 }
